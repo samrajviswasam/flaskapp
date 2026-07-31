@@ -4,21 +4,26 @@ pipeline {
 
     environment {
         IMAGE_NAME = "flask-app"
+        CONTAINER_NAME = "flask-container"
     }
 
     stages {
 
+        stage('Clean Workspace') {
+            steps {
+                sh 'rm -rf flaskapp || true'
+            }
+        }
+
         stage('Clone Repository') {
             steps {
-                sh '''
-                git clone https://github.com/samrajviswasam/flaskapp.git
-                '''
+                sh 'git clone https://github.com/samrajviswasam/flaskapp.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                dir('flask-app') {
+                dir('flaskapp') {
                     sh 'docker build -t $IMAGE_NAME .'
                 }
             }
@@ -26,19 +31,28 @@ pipeline {
 
         stage('Remove Old Container') {
             steps {
-                sh 'docker rm -f flask-container || true'
+                sh 'docker rm -f $CONTAINER_NAME || true'
             }
         }
 
         stage('Run Container') {
             steps {
                 sh '''
-                docker run -d \
-                    --name flask-container \
+                    docker run -d \
+                    --name $CONTAINER_NAME \
                     -p 5000:5000 \
-                    flask-app
+                    $IMAGE_NAME
                 '''
             }
+        }
+    }
+
+    post {
+        success {
+            echo "Flask application deployed successfully."
+        }
+        failure {
+            echo "Deployment failed."
         }
     }
 }
