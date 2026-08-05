@@ -1,0 +1,36 @@
+name: Flask App Deployment
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Dependencies
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Stop Existing Flask App
+        run: |
+          pkill -f "python app.py" || true
+          pkill -f "python3 app.py" || true
+
+      - name: Start Flask App
+        run: |
+          source venv/bin/activate
+          nohup python app.py > flask.log 2>&1 &
